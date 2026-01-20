@@ -74,7 +74,7 @@ def select_unquantized_moe_backend(
             backend = UnquantizedMoeBackend.AITER
         else:
             backend = UnquantizedMoeBackend.TRITON
-    if current_platform.is_cuda():
+    elif current_platform.is_cuda():
         if flashinfer_cutlass_moe_enabled:
             backend = UnquantizedMoeBackend.FLASHINFER_CUTLASS
         else:
@@ -91,14 +91,16 @@ def select_unquantized_moe_backend(
                     scope="local",
                 )
             backend = UnquantizedMoeBackend.TRITON
-    if current_platform.is_xpu():
+    elif current_platform.is_xpu():
         backend = UnquantizedMoeBackend.XPU
-    if current_platform.is_cpu():
+    elif current_platform.is_cpu():
         backend = UnquantizedMoeBackend.CPU
-    if current_platform.is_tpu():
+    elif current_platform.is_tpu():
         backend = UnquantizedMoeBackend.TPU
-    if current_platform.is_out_of_tree():
+    elif current_platform.is_out_of_tree():
         backend = UnquantizedMoeBackend.OOT
+    else:
+        raise ValueError(f"Unsupported platform: {current_platform}")
 
     logger.info_once(_make_log_backend(backend), scope="local")
     return backend
