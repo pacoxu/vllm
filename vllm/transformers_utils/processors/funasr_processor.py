@@ -5,7 +5,6 @@
 import numpy as np
 import torch
 import torch.nn as nn
-import torchaudio.compliance.kaldi as kaldi
 from torch.nn.utils.rnn import pad_sequence
 from transformers import (
     AutoFeatureExtractor,
@@ -19,6 +18,13 @@ from transformers.utils import TensorType
 from vllm.logger import init_logger
 
 logger = init_logger(__name__)
+
+
+def _get_kaldi():
+    """Lazy import to avoid requiring torchaudio when FunASR is not used."""
+    import torchaudio.compliance.kaldi as kaldi
+
+    return kaldi
 
 
 def apply_cmvn(inputs, cmvn):  # noqa
@@ -141,6 +147,7 @@ class WavFrontend(nn.Module):
             if self.upsacle_samples:
                 waveform = waveform * (1 << 15)
             waveform = waveform.unsqueeze(0)
+            kaldi = _get_kaldi()
             mat = kaldi.fbank(
                 waveform,
                 num_mel_bins=self.n_mels,
@@ -179,6 +186,7 @@ class WavFrontend(nn.Module):
             waveform = input[i][:waveform_length]
             waveform = waveform * (1 << 15)
             waveform = waveform.unsqueeze(0)
+            kaldi = _get_kaldi()
             mat = kaldi.fbank(
                 waveform,
                 num_mel_bins=self.n_mels,
